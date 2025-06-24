@@ -1,0 +1,5 @@
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.GeneratedMSBuildEditorConfig.editorconfig
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.AssemblyInfoInputs.cache
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.AssemblyInfo.cs
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.csproj.CoreCompileInputs.cache
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.sourcelink.json

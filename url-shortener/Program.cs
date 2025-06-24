@@ -8,7 +8,7 @@ internal class Program
 	// it also allows you to move state out of the application layer, allowing for horizontal scalability
 	// if we never wanted to scale this or persist to disk, while also supporting concurrency, ConcurrentDictionary is the better structure
 	// if we expect 1000s of short urls to be mapped to a long url, a hashset or something with a index to help with removal is probably better than the list value
-	private var longToShortMap = new Dictionary<string, List<string>>();
+	private static Dictionary<string, List<string>> longToShortMap = new Dictionary<string, List<string>>();
 
 	// inverse data structure to ensure fast lookups in both directions
 	// trade off is duplication of data, there is probably a more optimal way to do this like having 
@@ -18,23 +18,27 @@ internal class Program
 	// but if it is a constraint, i'd need to figure out a more optimal way to store this data
 	// you could also consider compression, or using protobufs instead of a json string to save on storage/ram costs
 	// you could also consider using string pointers/string interning to make sure there is only a single instance of a given string in memory
-	private var shortToLongMap = new Dictionary<string, string>();
+	private static Dictionary<string, string> shortToLongMap = new Dictionary<string, string>();
 
 	// these two related data structures are probably better living together in their own class 
 	// with access functions that ensure they remain in sync
 
     static void Main(string[] args)
     {
-		// data validation
-		// incoming long url is valid
-		
 		// todo, take from args and validate
+		// probably would want a data validation layer to make sure you have valid urls
 		string validLongUrl = "https://google.com";
-		bool longUrlInput = true;
 		string validShortUrl = "https://tinyurl.com/01234567";
-		bool shortUrlInput = true;
-
 		string reqType = string.Empty;
+
+		RunProgram(reqType, validShortUrl, validLongUrl);
+    }
+
+	// main program logic, kinda not great for unit testing because results are written to console..
+	public static void RunProgram(string reqType, string validShortUrl, string validLongUrl)
+	{
+		bool shortUrlInput = !string.IsNullOrWhiteSpace(validShortUrl);
+		bool longUrlInput = !string.IsNullOrWhiteSpace(validLongUrl);
 		switch (reqType)
 		{
 			case "GET":
@@ -43,6 +47,7 @@ internal class Program
 				{
 					GetLongUrlFromShort(validShortUrl);
 				}
+				break;
 			case "POST":
 				// if only long in
 				// generate new short from long
@@ -60,6 +65,7 @@ internal class Program
 				{
 					Console.WriteLine($"bad request: invalid user input, expected both short and long, or just long, use GET if you want to get associated long from short");
 				}
+				break;
 			case "DELETE":
 				if (shortUrlInput)
 				{
@@ -68,16 +74,17 @@ internal class Program
 				}
 				else
 				{
-					Console.WriteLine($"bad request: expecting short url input in order to delete")
+					Console.WriteLine($"bad request: expecting short url input in order to delete");
 				}
+				break;
 			default:
 				Console.WriteLine($"unknown req type of: {reqType}");
+				break;
 		}
 
-		return;
-    }
+	}
 
-	private void GetShortUrlsFromLong(string longUrl) 
+	private static void GetShortUrlsFromLong(string longUrl) 
 	{
 		if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
 		{
@@ -93,7 +100,7 @@ internal class Program
 		}
 	}
 
-	private void GenerateShortAndStore(string longUrl)
+	private static void GenerateShortAndStore(string longUrl)
 	{
 		(bool success, string shortUrl) = GenerateShortFromLong(longUrl);
 		if (success)
@@ -118,7 +125,7 @@ internal class Program
 		}
 	}
 
-	private void GetLongUrlFromShort(string shortUrl)
+	private static void GetLongUrlFromShort(string shortUrl)
 	{
 		if (shortToLongMap.TryGetValue(shortUrl, out string longUrl))
 		{
@@ -130,7 +137,7 @@ internal class Program
 		}
 	}
 
-	private void TryReserveSpecificShort(string desiredShortUrl, string longUrl)
+	private static void TryReserveSpecificShort(string desiredShortUrl, string longUrl)
 	{
 		// check if short url is in use
 		if (shortToLongMap.TryGetValue(desiredShortUrl, out _))
@@ -150,12 +157,12 @@ internal class Program
 			{
 				longToShortMap[longUrl] = new List<string> {desiredShortUrl};
 			}
-			Console.WriteLine($"result: successfully mapped desiredShortUrl: {desiredShortUrl} to long: {longUrl}")
+			Console.WriteLine($"result: successfully mapped desiredShortUrl: {desiredShortUrl} to long: {longUrl}");
 		}
 
 	}
 
-	private void RemoveShortUrl(string shortUrl)
+	private static void RemoveShortUrl(string shortUrl)
 	{
 		if (shortToLongMap.TryGetValue(shortUrl, out string longUrl))
 		{
@@ -187,15 +194,22 @@ internal class Program
 	//	this is a good solution, less complex, doesn't require keeping track of a global set of available shorturls
 	//	potentially less resource intensive
 	//3.keep full set of urls in their own map or set, mark them as in use as they are used, check for unused ones
-	//	this requires additional disk/ram, but makes the compution straight forward
+	//	this requires additional disk/ram, but makes the compution straight forward, so you can make that tradeoff if you want
+	//	but if you go into longer than 8 character short urls, the memory complexity increases significantly
 	// i personally like the guid approach, avoids needing global state meaning we can scale horizontally and require less cordination across threads/processes
-	private (bool, string) GenerateShortFromLong(string long)
+	private static (bool, string) GenerateShortFromLong(string _)
 	{
-		// generate guid
-		// truncate to 8
-		// append to end of base url
-		// check if exists
-		// 	repeat if exists
-		// store
+		const string baseUrl = "https://roburl.com/";
+
+		// probably want to put a max attempts here in case there is a bug, wouldnt want an infinite loop
+		while(true)
+		{
+			string g = Guid.NewGuid().ToString("N").Substring(0, 8);
+			string url = baseUrl + g;
+			if (!shortToLongMap.ContainsKey(url))
+			{
+				return (true, url);
+			}
+		}
 	}
 }
