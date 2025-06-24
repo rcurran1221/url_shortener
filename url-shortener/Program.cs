@@ -7,6 +7,7 @@ internal class Program
 	// using redis allows for high volume concurrent reads/writes without worrying about thread safety in the application layer
 	// it also allows you to move state out of the application layer, allowing for horizontal scalability
 	// if we never wanted to scale this or persist to disk, while also supporting concurrency, ConcurrentDictionary is the better structure
+	// if we expect 1000s of short urls to be mapped to a long url, a hashset or something with a index to help with removal is probably better than the list value
 	private var longToShortMap = new Dictionary<string, List<string>>();
 
 	// inverse data structure to ensure fast lookups in both directions
@@ -16,7 +17,11 @@ internal class Program
 	// because these are relatively small data items, storage/ram tradeoff may be acceptable,
 	// but if it is a constraint, i'd need to figure out a more optimal way to store this data
 	// you could also consider compression, or using protobufs instead of a json string to save on storage/ram costs
+	// you could also consider using string pointers/string interning to make sure there is only a single instance of a given string in memory
 	private var shortToLongMap = new Dictionary<string, string>();
+
+	// these two related data structures are probably better living together in their own class 
+	// with access functions that ensure they remain in sync
 
     static void Main(string[] args)
     {
@@ -58,7 +63,7 @@ internal class Program
 			case "DELETE":
 				if (shortUrlInput)
 				{
-					// todo - short in, remove it if it exists
+					// short in, remove it if it exists
 					RemoveShortUrl(validShortUrl);
 				}
 				else
@@ -76,12 +81,14 @@ internal class Program
 	{
 		if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
 		{
-			Console.WriteLine($"short urls exist for long url {longUrl}:")
-			Console.WriteLine($"result: {JsonConvert.SerializeObject(shortUrls)}");
+			Console.WriteLine($"short urls exist for long url {longUrl}, generating an adding new short url");
+			// this method will output generated shorturl
+			GenerateShortAndStore(longUrl);
 		}
 		else
 		{
 			Console.WriteLine($"no short urls exist for long url {longUrl}, generating:");
+			// these two branches share some logic, candidate for refactor
 			GenerateShortAndStore(longUrl);
 		}
 	}
@@ -91,7 +98,14 @@ internal class Program
 		(bool success, string shortUrl) = GenerateShortFromLong(longUrl);
 		if (success)
 		{
-			longToShortMap[longUrl] = shortUrl;
+			if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
+			{
+				shortUrls.Add(shortUrl);
+			}
+			else 
+			{
+				longToShortMap[longUrl] = new List<string> {shortUrl};
+			}
 			shortToLongMap[shortUrl] = longUrl;
 			Console.WriteLine($"successfully generated short: {shortUrl} from {longUrl}");
 			Console.WriteLine($"result: {shortUrl}"); 
@@ -118,6 +132,7 @@ internal class Program
 
 	private void TryReserveSpecificShort(string desiredShortUrl, string longUrl)
 	{
+		// check if short url is in use
 		if (shortToLongMap.TryGetValue(desiredShortUrl, out _))
 		{
 			Console.WriteLine($"desiredShortUrl: {desiredShortUrl} is already taken, generating new url");
@@ -125,26 +140,62 @@ internal class Program
 		}
 		else
 		{
+			// store long short mapping
 			shortToLongMap[desiredShortUrl] = longUrl;
-
+			if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
+			{
+				shortUrls.Add(desiredShortUrl);
+			}
+			else 
+			{
+				longToShortMap[longUrl] = new List<string> {desiredShortUrl};
+			}
+			Console.WriteLine($"result: successfully mapped desiredShortUrl: {desiredShortUrl} to long: {longUrl}")
 		}
 
 	}
 
 	private void RemoveShortUrl(string shortUrl)
 	{
+		if (shortToLongMap.TryGetValue(shortUrl, out string longUrl))
+		{
+			shortToLongMap.Remove(shortUrl);
+			if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
+			{
+				shortUrls.Remove(x => string.Equals(x, shortUrl));
+			}
+			else
+			{
+				Console.WriteLine($"internal server error: data structures in disagreement");
+			}
+		}
+		else
+		{
+			Console.WriteLine($"result: did not find shorturl: {shortUrl}, no action");
+		}
 
 	}
 
+	// this is the core short url generation logic
+	// couple of options:
+	// 1. hash the long using SHA-1, grab first 8 characters, check if exists
+	// 	if there is a collision, add some constant string and rehash
+	// 		repeat until there is no collisions
+	// personally, not a huge fan of repeatedly hashing and appending strings, seems a bit resource intensive and complex
+	//2. generate a guid, grab the first 8 (convienently before first dash), check if exists, 
+	//	if there is a collision, just retry
+	//	this is a good solution, less complex, doesn't require keeping track of a global set of available shorturls
+	//	potentially less resource intensive
+	//3.keep full set of urls in their own map or set, mark them as in use as they are used, check for unused ones
+	//	this requires additional disk/ram, but makes the compution straight forward
+	// i personally like the guid approach, avoids needing global state meaning we can scale horizontally and require less cordination across threads/processes
 	private (bool, string) GenerateShortFromLong(string long)
 	{
-		// base url
-		// 	todo - optimization, only store the unqiue bits of the shortened url,
-		// 	keep the base url as a const and concat strings before returning to user
-		// core functionality
-		// avoid collisions
-		// hasing algo
-		//
-
+		// generate guid
+		// truncate to 8
+		// append to end of base url
+		// check if exists
+		// 	repeat if exists
+		// store
 	}
 }
