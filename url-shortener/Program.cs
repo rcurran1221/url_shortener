@@ -169,7 +169,7 @@ internal class Program
 			shortToLongMap.Remove(shortUrl);
 			if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
 			{
-				shortUrls.Remove(x => string.Equals(x, shortUrl));
+				shortUrls.Remove(shortUrl);
 			}
 			else
 			{

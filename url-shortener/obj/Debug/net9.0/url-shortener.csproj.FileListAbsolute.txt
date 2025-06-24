@@ -3,3 +3,13 @@
 /home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.AssemblyInfo.cs
 /home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.csproj.CoreCompileInputs.cache
 /home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.sourcelink.json
+/home/robc/repos/url_shortener/url-shortener/bin/Debug/net9.0/url-shortener
+/home/robc/repos/url_shortener/url-shortener/bin/Debug/net9.0/url-shortener.deps.json
+/home/robc/repos/url_shortener/url-shortener/bin/Debug/net9.0/url-shortener.runtimeconfig.json
+/home/robc/repos/url_shortener/url-shortener/bin/Debug/net9.0/url-shortener.dll
+/home/robc/repos/url_shortener/url-shortener/bin/Debug/net9.0/url-shortener.pdb
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.dll
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/refint/url-shortener.dll
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.pdb
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/url-shortener.genruntimeconfig.cache
+/home/robc/repos/url_shortener/url-shortener/obj/Debug/net9.0/ref/url-shortener.dll
