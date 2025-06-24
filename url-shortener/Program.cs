@@ -22,14 +22,31 @@ internal class Program
 
 	// these two related data structures are probably better living together in their own class 
 	// with access functions that ensure they remain in sync
+	//
 
+	//example usage:
+	// dotnet run "POST" "" "https://google.long" -> generates a unique short from long
+	// dotnet run "POST" "https://roburl.com/01234567" "https://google.long" -> trys to use the requested short, generates a new one if already in use
+	// dotnet run "GET" "https://roburl.com/01234567" "" -> gets long from short
+	// dotnet run "DELETE" "https://roburl.com/01234567" "" -> trys to remove the short from usage
     static void Main(string[] args)
     {
-		// todo, take from args and validate
+		// take from args and validate
 		// probably would want a data validation layer to make sure you have valid urls
-		string validLongUrl = "https://google.com";
-		string validShortUrl = "https://tinyurl.com/01234567";
-		string reqType = string.Empty;
+		if (args.Length == 0)
+		{
+			// run test scenario...
+			return;
+		}
+
+		//
+		string validLongUrl = args[2];
+		string validShortUrl = args[1];
+		string reqType = args[0];
+		foreach (var arg in args)
+		{
+			Console.WriteLine(arg);
+		}
 
 		RunProgram(reqType, validShortUrl, validLongUrl);
     }
