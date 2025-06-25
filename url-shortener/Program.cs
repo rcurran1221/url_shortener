@@ -44,7 +44,8 @@ internal class Program
         if (args.Length == 0)
         {
 			RunProgram("POST", "", "https://google.long");
-			RunProgram("POST", "", "https://google.long"); // generate 2 shorts for google.long
+			RunProgram("POST", "", "https://google.long");
+			RunProgram("POST", "", "https://google.long"); // generate 3 shorts for google.long
 			RunProgram("POST", "https://roburl.com/01234567", "http://rob.com"); // try to reserve a custom short
 			RunProgram("GET", "https://roburl.com/01234567", ""); // get long from short, should return rob.com
 			RunProgram("GET", "https://roburl.com/01234567", ""); // same request, should see 2 for access count
@@ -119,6 +120,10 @@ internal class Program
         if (longToShortMap.TryGetValue(longUrl, out List<string> shortUrls))
         {
             Console.WriteLine($"short urls exist for long url {longUrl}, generating an adding new short url");
+			foreach(var shortUrl in shortUrls)
+			{
+				Console.WriteLine($"existing short url: {shortUrl} for long: {longUrl}");
+			}
             // this method will output generated shorturl
             GenerateShortAndStore(longUrl);
         }
